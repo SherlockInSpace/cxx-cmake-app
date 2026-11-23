@@ -45,7 +45,21 @@ if(CPM_LOCAL_PACKAGES_ONLY)
 endif()
 
 find_package(util 0.3 CONFIG REQUIRED)
-find_package(spdlog 1.15 CONFIG REQUIRED)
+
+# spdlog from the image or the Yocto sysroot. If CPM is allowed to fetch
+# (-DCPM_LOCAL_PACKAGES_ONLY=OFF), it builds the v1.17.0 source tarball,
+# checked by its SHA-256; -DCPM_DOWNLOAD_spdlog=ON builds that even when a
+# local spdlog exists. CPM only reads that switch in CPMFindPackage, so it is
+# passed through as FORCE.
+CPMAddPackage(
+  NAME spdlog
+  FORCE "${CPM_DOWNLOAD_spdlog}"
+  VERSION 1.15.0
+  URL https://github.com/gabime/spdlog/archive/refs/tags/v1.17.0.tar.gz
+  URL_HASH SHA256=d8862955c6d74e5846b3f580b1605d2428b11d97a410d86e2fb13e857cd3a744
+  FIND_PACKAGE_ARGUMENTS "CONFIG"
+  OPTIONS "SPDLOG_INSTALL OFF" "SPDLOG_BUILD_EXAMPLE OFF"
+)
 
 ################################################################################
 # Warnings
