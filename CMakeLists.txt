@@ -122,6 +122,27 @@ target_link_libraries(app_core
   PRIVATE app_warnings
 )
 
+# Tracy profiling, off by default. The zones in src/profiling.hpp compile to
+# nothing unless this is on, and then Tracy::TracyClient comes from the image
+# (or, if CPM may fetch, the v0.15.0 tarball checked by its SHA-256). An
+# application is the final binary, so whether to ship one with zones is its
+# own decision; the library template never has them.
+option(ENABLE_TRACY "Build the application with Tracy profiling zones" OFF)
+
+if(ENABLE_TRACY)
+  CPMAddPackage(
+    NAME Tracy
+    FORCE "${CPM_DOWNLOAD_Tracy}"
+    VERSION 0.15.0
+    URL https://github.com/wolfpld/tracy/archive/refs/tags/v0.15.0.tar.gz
+    URL_HASH SHA256=3d57da54aa67d7875da1e8fecd0bd5957675cef73c27dd52bffb6ab8d290a5e6
+    FIND_PACKAGE_ARGUMENTS "CONFIG"
+    OPTIONS "TRACY_ENABLE ON"
+  )
+  target_link_libraries(app_core PUBLIC Tracy::TracyClient)
+  target_compile_definitions(app_core PUBLIC APP_ENABLE_TRACY)
+endif()
+
 add_executable(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
 target_link_libraries(${PROJECT_NAME}
   PRIVATE

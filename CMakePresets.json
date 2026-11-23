@@ -34,6 +34,15 @@
       }
     },
     {
+      "name": "tracy",
+      "inherits": "base",
+      "displayName": "Tracy zones (RelWithDebInfo)",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "ENABLE_TRACY": "ON"
+      }
+    },
+    {
       "name": "asan-ubsan",
       "inherits": "base",
       "displayName": "AddressSanitizer + UBSan (Debug)",
@@ -80,6 +89,10 @@
       "configurePreset": "release"
     },
     {
+      "name": "tracy",
+      "configurePreset": "tracy"
+    },
+    {
       "name": "asan-ubsan",
       "configurePreset": "asan-ubsan"
     },
@@ -112,6 +125,11 @@
       "name": "release",
       "inherits": "base",
       "configurePreset": "release"
+    },
+    {
+      "name": "tracy",
+      "inherits": "base",
+      "configurePreset": "tracy"
     },
     {
       "name": "asan-ubsan",
@@ -173,6 +191,23 @@
         {
           "type": "test",
           "name": "release"
+        }
+      ]
+    },
+    {
+      "name": "tracy",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "tracy"
+        },
+        {
+          "type": "build",
+          "name": "tracy"
+        },
+        {
+          "type": "test",
+          "name": "tracy"
         }
       ]
     },
