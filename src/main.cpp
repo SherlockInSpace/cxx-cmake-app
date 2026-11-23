@@ -13,21 +13,32 @@
 #include <spdlog/spdlog.h>
 
 #include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <exception>
 #include <print>
+#include <ranges>
 #include <span>
 #include <string>
 
 int main(int argc, char* argv[])
 {
-    spdlog::cfg::load_env_levels();
-    auto console = spdlog::stderr_color_mt("app");
+    // Formatting and logging can throw; the error goes to stderr instead of
+    // ending the process with std::terminate.
+    try {
+        spdlog::cfg::load_env_levels();
+        auto console = spdlog::stderr_color_mt("app");
 
-    app::WordFilter filter;
-    const std::span arguments(argv, static_cast<std::size_t>(argc));
-    for (std::size_t idx = 1; idx < arguments.size(); ++idx) {
-        const std::string word = arguments[idx];
-        console->debug("Observing word {} at index {}", word, idx);
-        std::println("{} {}", app::toString(filter.observe(word)), word);
+        app::WordFilter filter;
+        const std::span arguments(argv, static_cast<std::size_t>(argc));
+        for (const std::string word : arguments | std::views::drop(1)) {
+            console->debug("Observing word {}", word);
+            std::println("{} {}", app::toString(filter.observe(word)), word);
+        }
+    } catch (const std::exception& error) {
+        std::fputs(error.what(), stderr);
+        std::fputs("\n", stderr);
+        return EXIT_FAILURE;
     }
-    return 0;
+    return EXIT_SUCCESS;
 }
