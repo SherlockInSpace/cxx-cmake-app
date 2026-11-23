@@ -60,3 +60,36 @@ jobs:
           test -d build/ci-debug/_deps/util-build
           cmake --build --preset ci-debug
           ctest --preset ci-debug
+
+  # clang-tidy reads each file's flags from compile_commands.json, so the tree
+  # is configured with clang. .clang-tidy makes every warning an error.
+  tidy:
+    name: clang-tidy
+    runs-on: ubuntu-24.04
+    container: ghcr.io/sherlockinspace/cxx-cmake-container/ci:0.1.5@sha256:03884a80512bdfe862456d2be4be5a5f3f5fd0bf1f75854c60d8b3ccc22ea1ad
+    timeout-minutes: 30
+    env:
+      CXX: clang++
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Configure with clang
+        run: cmake --preset ci-debug
+
+      - name: Run clang-tidy
+        run: run-clang-tidy -quiet -p build/ci-debug 'src/|test/unit/'
+
+  format:
+    name: clang-format
+    runs-on: ubuntu-24.04
+    container: ghcr.io/sherlockinspace/cxx-cmake-container/ci:0.1.5@sha256:03884a80512bdfe862456d2be4be5a5f3f5fd0bf1f75854c60d8b3ccc22ea1ad
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      # The checkout belongs to the runner's user and the container runs as
+      # root, so git needs telling that the directory is safe.
+      - name: Check formatting
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          clang-format --dry-run -Werror $(git ls-files 'src/*.cpp' 'inc/*.hpp' 'test/*.cpp')
