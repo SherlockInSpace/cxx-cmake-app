@@ -16,7 +16,7 @@ main(int argc, char *argv[])
     spdlog::cfg::load_env_levels();
 
     for (auto idx = 1; idx < argc; ++idx) {
-        bloomFilter.insert(argv[1]);
+        bloomFilter.insert(argv[idx]);
         SPDLOG_LOGGER_DEBUG(__console, "Inserting word {} at index {}",
             argv[idx], idx);
     }
