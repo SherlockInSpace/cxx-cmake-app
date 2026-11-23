@@ -26,4 +26,37 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Configure, build and test (warnings are errors)
-        run: cmake --workflow --preset ci-debug
+        shell: bash
+        run: |
+          set -o pipefail
+          cmake --workflow --preset ci-debug 2>&1 | tee workflow.log
+
+      # By default util comes from the image, through find_package.
+      - name: Check util resolved from the image
+        run: |
+          grep -F 'CPM: Using local package util@' workflow.log
+
+  # The override a developer uses for a change that spans both repositories:
+  # util built from a library checkout next to this one.
+  util-from-checkout:
+    name: build against a library checkout
+    runs-on: ubuntu-24.04
+    container: ghcr.io/sherlockinspace/cxx-cmake-container/ci:0.1.5@sha256:03884a80512bdfe862456d2be4be5a5f3f5fd0bf1f75854c60d8b3ccc22ea1ad
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: cxx-cmake-app
+
+      - uses: actions/checkout@v7
+        with:
+          repository: SherlockInSpace/cxx-cmake-library
+          path: cxx-cmake-library
+
+      - name: Configure, build and test with CPM_util_SOURCE
+        working-directory: cxx-cmake-app
+        run: |
+          cmake --preset ci-debug -DCPM_util_SOURCE="$GITHUB_WORKSPACE/cxx-cmake-library"
+          test -d build/ci-debug/_deps/util-build
+          cmake --build --preset ci-debug
+          ctest --preset ci-debug
