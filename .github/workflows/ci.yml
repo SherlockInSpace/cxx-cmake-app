@@ -1,12 +1,11 @@
-# Interim build-and-test job until the library template's reusable gate takes
-# over (#12): ci-debug in the cxx-cmake-container ci image, named by version
-# and digest, which has util and spdlog installed.
+# Pull request gate: the library template's _gate.yml at a release tag, in
+# the cxx-cmake-container ci image named by version and digest, with this
+# application's labels, file lists and legs. The jobs after it are the
+# application's own. Pushes to main run the full suite (post-merge.yml).
 name: ci
 
 on:
   pull_request:
-    branches: [main]
-  push:
     branches: [main]
 
 permissions:
@@ -17,24 +16,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-and-test:
-    name: build and test
+  # No coverage preset yet, so that leg is off.
+  gate:
+    uses: SherlockInSpace/cxx-cmake-library/.github/workflows/_gate.yml@v0.4.0
+    permissions:
+      contents: read
+      checks: write
+    with:
+      image: ghcr.io/sherlockinspace/cxx-cmake-container/ci:0.1.5@sha256:03884a80512bdfe862456d2be4be5a5f3f5fd0bf1f75854c60d8b3ccc22ea1ad
+      test-labels: unit|integration
+      coverage: false
+      tidy-files: src/|test/unit/
+      format-files: |
+        src/*.cpp
+        src/*.hpp
+        inc/*.hpp
+        test/*.cpp
+
+  # By default util comes from the image, through find_package.
+  util-from-image:
+    name: util resolves from the image
     runs-on: ubuntu-24.04
     container: ghcr.io/sherlockinspace/cxx-cmake-container/ci:0.1.5@sha256:03884a80512bdfe862456d2be4be5a5f3f5fd0bf1f75854c60d8b3ccc22ea1ad
-    timeout-minutes: 30
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
 
-      - name: Configure, build and test (warnings are errors)
+      - name: Configure and check the CPM log
         shell: bash
         run: |
           set -o pipefail
-          cmake --workflow --preset ci-debug 2>&1 | tee workflow.log
-
-      # By default util comes from the image, through find_package.
-      - name: Check util resolved from the image
-        run: |
-          grep -F 'CPM: Using local package util@' workflow.log
+          cmake --preset ci-debug 2>&1 | tee configure.log
+          grep -F 'CPM: Using local package util@' configure.log
 
   # The override a developer uses for a change that spans both repositories:
   # util built from a library checkout next to this one.
@@ -73,39 +86,6 @@ jobs:
 
       - name: Configure, build and test with ENABLE_TRACY
         run: cmake --workflow --preset tracy
-
-  # clang-tidy reads each file's flags from compile_commands.json, so the tree
-  # is configured with clang. .clang-tidy makes every warning an error.
-  tidy:
-    name: clang-tidy
-    runs-on: ubuntu-24.04
-    container: ghcr.io/sherlockinspace/cxx-cmake-container/ci:0.1.5@sha256:03884a80512bdfe862456d2be4be5a5f3f5fd0bf1f75854c60d8b3ccc22ea1ad
-    timeout-minutes: 30
-    env:
-      CXX: clang++
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Configure with clang
-        run: cmake --preset ci-debug
-
-      - name: Run clang-tidy
-        run: run-clang-tidy -quiet -p build/ci-debug 'src/|test/unit/'
-
-  format:
-    name: clang-format
-    runs-on: ubuntu-24.04
-    container: ghcr.io/sherlockinspace/cxx-cmake-container/ci:0.1.5@sha256:03884a80512bdfe862456d2be4be5a5f3f5fd0bf1f75854c60d8b3ccc22ea1ad
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v7
-
-      # The checkout belongs to the runner's user and the container runs as
-      # root, so git needs telling that the directory is safe.
-      - name: Check formatting
-        run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          clang-format --dry-run -Werror $(git ls-files 'src/*.cpp' 'src/*.hpp' 'inc/*.hpp' 'test/*.cpp')
 
   # The integration tier's Python, linted with pyproject.toml's rules.
   ruff:
