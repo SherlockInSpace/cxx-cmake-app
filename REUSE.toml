@@ -7,3 +7,10 @@ path = ["**"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2022-2026 Ryan Sherlock"
 SPDX-License-Identifier = "MIT"
+
+# Vendored from cpm-cmake/CPM.cmake v0.43.1, see THIRD_PARTY_NOTICES.md.
+[[annotations]]
+path = ["cmake/CPM.cmake"]
+precedence = "override"
+SPDX-FileCopyrightText = "2019-2023 Lars Melchior and contributors"
+SPDX-License-Identifier = "MIT"

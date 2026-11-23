@@ -1,4 +1,7 @@
-cmake_minimum_required(VERSION 3.20)
+# SPDX-FileCopyrightText: 2022-2026 Ryan Sherlock
+# SPDX-License-Identifier: MIT
+
+cmake_minimum_required(VERSION 4.3)
 
 ################################################################################
 # Project name and configuration
@@ -13,139 +16,81 @@ project(
 ################################################################################
 # Do NOT allow in-source builds
 if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
-message(
-  FATAL_ERROR
-    "In-source builds not allowed. "
-    "Please make a build directory and run CMake from there."
-)
+  message(
+    FATAL_ERROR
+      "In-source builds not allowed. "
+      "Please make a build directory and run CMake from there."
+  )
 endif()
 
 ################################################################################
 # Includes
-include(CMakePackageConfigHelpers)
 include(CTest)
 include(GNUInstallDirs)
 
 ################################################################################
-# Set some configuration options
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+# Dependencies
+# As in the library template: every dependency resolves through find_package,
+# from the container image or the Yocto sysroot, and configure fails if one is
+# missing rather than downloading it. -DCPM_LOCAL_PACKAGES_ONLY=OFF lets CPM
+# fetch what find_package cannot find.
+option(CPM_USE_LOCAL_PACKAGES "Try find_package before downloading" ON)
+option(CPM_LOCAL_PACKAGES_ONLY "Only use find_package, never download" ON)
+include(${PROJECT_SOURCE_DIR}/cmake/CPM.cmake)
 
-################################################################################
-# List any package dependencies
-find_package(spdlog)
-find_package(util)
-
-################################################################################
-# Create a shared library
-add_executable(${PROJECT_NAME})
-
-################################################################################
-# Target include files
-file(GLOB PUBLIC_HEADER_FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/inc/*.hpp
-)
-
-target_include_directories(${PROJECT_NAME} PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>
-    $<INSTALL_INTERFACE:include>
-)
-
-################################################################################
-# Target source files
-file(GLOB SOURCE_FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
-)
-
-target_sources(${PROJECT_NAME} PRIVATE
-    $<BUILD_INTERFACE:${SOURCE_FILES}>
-)
-
-################################################################################
-# Link in depedent libraries
-target_link_libraries(${PROJECT_NAME}
-  PRIVATE
-    spdlog::spdlog
-    util::util
-)
-
-################################################################################
-# Build tests
-if (BUILD_TEST)
-  enable_testing()
-  add_subdirectory(test)
+# CPM reports a missing package with SEND_ERROR and then tries to download it;
+# with FetchContent disconnected that cannot happen.
+if(CPM_LOCAL_PACKAGES_ONLY)
+  set(FETCHCONTENT_FULLY_DISCONNECTED ON)
 endif()
 
+find_package(util 0.3 CONFIG REQUIRED)
+find_package(spdlog 1.15 CONFIG REQUIRED)
+
 ################################################################################
-# INSTALL SECTION
-# Set the installation locations for the library
-install(
-    TARGETS ${PROJECT_NAME}
-    EXPORT ${PROJECT_NAME}_Targets
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+# Warnings
+# On app_warnings, an INTERFACE target the app links PRIVATE. -Werror is a
+# separate switch: on in the CI presets, off in dev.
+option(APP_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
+
+add_library(app_warnings INTERFACE)
+target_compile_options(app_warnings INTERFACE
+  $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:
+    -Wall -Wextra -Wpedantic
+    -Wshadow -Wconversion -Wsign-conversion -Wold-style-cast -Wcast-align
+    -Wnon-virtual-dtor -Woverloaded-virtual -Wnull-dereference
+    -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough>
+  $<$<CXX_COMPILER_ID:GNU>:
+    -Wduplicated-cond -Wduplicated-branches -Wlogical-op -Wuseless-cast>
+  $<$<AND:$<BOOL:${APP_WARNINGS_AS_ERRORS}>,$<CXX_COMPILER_ID:GNU,Clang,AppleClang>>:-Werror>
 )
 
-# Write out the information to the *Target.cmake file
-install(
-  EXPORT ${PROJECT_NAME}_Targets
-  FILE ${PROJECT_NAME}Targets.cmake
-  NAMESPACE ${PROJECT_NAME}::
-  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake)
+################################################################################
+# The application
+# Sources are globbed, so a new file needs no edit here. CONFIGURE_DEPENDS
+# re-checks the glob at build time.
+file(GLOB SOURCE_FILES CONFIGURE_DEPENDS
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
+)
 
-# Copy public headers to destination
-install(FILES ${PUBLIC_HEADER_FILES}
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+add_executable(${PROJECT_NAME} ${SOURCE_FILES})
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_23)
+# No C++20 modules, so skip the module scan (it also puts GCC-only flags into
+# compile_commands.json that clang-tidy rejects).
+set_target_properties(${PROJECT_NAME} PROPERTIES CXX_SCAN_FOR_MODULES OFF)
+target_link_libraries(${PROJECT_NAME}
+  PRIVATE
+    app_warnings
+    util::util
+    spdlog::spdlog
+)
+
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 ################################################################################
-# Write out the config version information
-write_basic_package_version_file(
-  "${PROJECT_NAME}ConfigVersion.cmake"
-  VERSION ${PROJECT_VERSION}
-  COMPATIBILITY SameMajorVersion)
-
-# Create the package configuration
-configure_package_config_file(
-  "${PROJECT_SOURCE_DIR}/cmake/TemplateConfig.cmake.in"
-  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-  INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake)
-
-# Install the package and version config
-install(FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-              "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake)
-
-# Add in the LICENSE
-set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
-
-################################################################################
-# Build Documentation
-# first we can indicate the documentation build as an
-# option and set it to ON by default
-option(BUILD_DOC "Build documentation" ON)
-
-if (BUILD_DOC)
-  # check if Doxygen is installed
-  find_package(Doxygen)
-  if (DOXYGEN_FOUND)
-      # set input and output files
-      set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/docs/Doxyfile.in)
-      set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
-
-      # request to configure the file
-      configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
-      message("Doxygen build started")
-
-      # note the option ALL which allows to build
-      # the docs together with the application
-      add_custom_target( doc_doxygen ALL
-          COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-          COMMENT "Generating API documentation with Doxygen"
-          VERBATIM )
-  else (DOXYGEN_FOUND)
-    message("Doxygen need to be installed to generate the doxygen documentation")
-  endif (DOXYGEN_FOUND)
-endif(BUILD_DOC)
+# Tests
+# Until the unit and integration tiers exist, one check that the binary runs.
+if(BUILD_TESTING)
+  add_test(NAME app.runs COMMAND ${PROJECT_NAME} alpha beta gamma)
+  set_tests_properties(app.runs PROPERTIES LABELS functional)
+endif()
