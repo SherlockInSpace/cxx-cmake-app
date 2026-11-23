@@ -8,5 +8,6 @@ the demo application seeded from the original monorepo, third-party dependencies
 test tier running under CTest.
 
 Family:
-[cxx-cmake (library template)](https://github.com/SherlockInSpace/cxx-cmake) ·
-[cxx-cmake-container (build environments)](https://github.com/SherlockInSpace/cxx-cmake-container)
+[cxx-cmake-library (library template)](https://github.com/SherlockInSpace/cxx-cmake-library) ·
+[cxx-cmake-container (build environments)](https://github.com/SherlockInSpace/cxx-cmake-container) ·
+[meta-cxx-cmake (Yocto layer)](https://github.com/SherlockInSpace/meta-cxx-cmake)
