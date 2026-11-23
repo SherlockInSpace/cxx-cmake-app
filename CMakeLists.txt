@@ -94,30 +94,56 @@ target_compile_options(app_warnings INTERFACE
 
 ################################################################################
 # The application
-# Sources are globbed, so a new file needs no edit here. CONFIGURE_DEPENDS
-# re-checks the glob at build time.
+# app_core holds everything except main(), so the unit tests can link it;
+# the app executable is main.cpp on top. Sources and headers are globbed, so a
+# new file needs no edit here, and the test-file check in test/unit picks it
+# up. CONFIGURE_DEPENDS re-checks the globs at build time.
+file(GLOB PUBLIC_HEADER_FILES CONFIGURE_DEPENDS
+  ${CMAKE_CURRENT_SOURCE_DIR}/inc/app/*.hpp
+)
 file(GLOB SOURCE_FILES CONFIGURE_DEPENDS
   ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
 )
+set(CORE_SOURCE_FILES ${SOURCE_FILES})
+list(FILTER CORE_SOURCE_FILES EXCLUDE REGEX "/main\\.cpp$")
 
-add_executable(${PROJECT_NAME} ${SOURCE_FILES})
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_23)
-# No C++20 modules, so skip the module scan (it also puts GCC-only flags into
-# compile_commands.json that clang-tidy rejects).
-set_target_properties(${PROJECT_NAME} PROPERTIES CXX_SCAN_FOR_MODULES OFF)
+add_library(app_core STATIC)
+target_sources(app_core
+  PUBLIC
+    FILE_SET HEADERS
+    BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/inc
+    FILES ${PUBLIC_HEADER_FILES}
+  PRIVATE
+    ${CORE_SOURCE_FILES}
+)
+target_compile_features(app_core PUBLIC cxx_std_23)
+target_link_libraries(app_core
+  PUBLIC util::util
+  PRIVATE app_warnings
+)
+
+add_executable(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
 target_link_libraries(${PROJECT_NAME}
   PRIVATE
+    app_core
     app_warnings
-    util::util
     spdlog::spdlog
 )
+
+# No C++20 modules, so skip the module scan (it also puts GCC-only flags into
+# compile_commands.json that clang-tidy rejects).
+set_target_properties(app_core ${PROJECT_NAME} PROPERTIES CXX_SCAN_FOR_MODULES OFF)
 
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 ################################################################################
 # Tests
-# Until the unit and integration tiers exist, one check that the binary runs.
 if(BUILD_TESTING)
-  add_test(NAME app.runs COMMAND ${PROJECT_NAME} alpha beta gamma)
-  set_tests_properties(app.runs PROPERTIES LABELS functional)
+  add_subdirectory(test)
+
+  # Until the integration tier arrives, one run of the binary and its output.
+  add_test(NAME app.runs COMMAND ${PROJECT_NAME} alpha beta alpha)
+  set_tests_properties(app.runs PROPERTIES
+    LABELS functional
+    PASS_REGULAR_EXPRESSION "new alpha\nnew beta\nseen alpha")
 endif()
