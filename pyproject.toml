@@ -1,0 +1,12 @@
+# Python tooling for the integration tier in test/integration/: pytest runs
+# it (through ctest -L integration), ruff lints it.
+
+[tool.pytest.ini_options]
+testpaths = ["test/integration"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]

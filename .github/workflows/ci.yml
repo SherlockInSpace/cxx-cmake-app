@@ -106,3 +106,15 @@ jobs:
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           clang-format --dry-run -Werror $(git ls-files 'src/*.cpp' 'src/*.hpp' 'inc/*.hpp' 'test/*.cpp')
+
+  # The integration tier's Python, linted with pyproject.toml's rules.
+  ruff:
+    name: ruff
+    runs-on: ubuntu-24.04
+    container: ghcr.io/sherlockinspace/cxx-cmake-container/ci:0.1.5@sha256:03884a80512bdfe862456d2be4be5a5f3f5fd0bf1f75854c60d8b3ccc22ea1ad
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Lint the Python
+        run: ruff check --no-cache
