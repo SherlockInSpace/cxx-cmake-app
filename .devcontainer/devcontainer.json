@@ -1,0 +1,27 @@
+// The dev image from cxx-cmake-container, named by version and digest like
+// CI's (README "Manual pins"). The parent of this checkout is mounted at
+// /work, as with the README's docker run line, so sibling checkouts are
+// there for CPM_util_SOURCE and other overrides, and ccache shares its volume.
+{
+  "name": "cxx-cmake-app",
+  "image": "ghcr.io/sherlockinspace/cxx-cmake-container/dev:0.1.5@sha256:e8663a5cd899b57203559db7e49b05b2fa29fc2736809906a6f21bbb767aadc3",
+  "workspaceMount": "source=${localWorkspaceFolder}/..,target=/work,type=bind",
+  "workspaceFolder": "/work/${localWorkspaceFolderBasename}",
+  "mounts": [
+    "source=cxx-cmake-ccache,target=/home/dev/.cache/ccache,type=volume"
+  ],
+  // The tools move dev to your user id, so files under /work stay yours.
+  "remoteUser": "dev",
+  "updateRemoteUserUID": true,
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cmake-tools",
+        "llvm-vs-code-extensions.vscode-clangd"
+      ],
+      "settings": {
+        "cmake.useCMakePresets": "always"
+      }
+    }
+  }
+}
