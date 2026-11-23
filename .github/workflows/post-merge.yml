@@ -1,0 +1,47 @@
+# The full suite (the library template's _full.yml) on every push to main
+# and weekly, in the same image as the gate, with the legs this application
+# has. The weekly run hands its result to _weekly.yml, which opens or updates
+# the drift issue when it failed.
+name: post-merge
+
+on:
+  push:
+    branches: [main]
+  # A change to this file runs it before it merges.
+  pull_request:
+    paths: [.github/workflows/post-merge.yml]
+  schedule:
+    - cron: "43 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: post-merge-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # util is not in Ubuntu, so no leg without the image; no tsan, docs or
+  # coverage presets yet.
+  full:
+    uses: SherlockInSpace/cxx-cmake-library/.github/workflows/_full.yml@v0.4.0
+    permissions:
+      contents: read
+      checks: write
+    with:
+      image: ghcr.io/sherlockinspace/cxx-cmake-container/ci:0.1.5@sha256:03884a80512bdfe862456d2be4be5a5f3f5fd0bf1f75854c60d8b3ccc22ea1ad
+      distro: false
+      tsan: false
+      docs: false
+      coverage: false
+
+  weekly:
+    needs: full
+    if: ${{ always() && github.event_name == 'schedule' }}
+    uses: SherlockInSpace/cxx-cmake-library/.github/workflows/_weekly.yml@v0.4.0
+    permissions:
+      contents: write
+      issues: write
+    with:
+      full-result: ${{ needs.full.result }}
