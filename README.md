@@ -49,6 +49,7 @@ word on stderr.
 | `release` | Release. |
 | `ci-debug`, `ci-release` | What CI builds: warnings are errors. |
 | `asan-ubsan` | Debug under AddressSanitizer and UBSan. |
+| `coverage` | GCC Debug with gcov; its workflow writes the coverage report (see Coverage). |
 | `tracy` | RelWithDebInfo with `ENABLE_TRACY` (see Profiling). |
 
 Each has a workflow preset, so `cmake --workflow --preset <name>` configures,
@@ -87,6 +88,23 @@ library's `main`.
   the built binary as `APP_BINARY`, and pytest writes a JUnit file. The tests run
   `app` as a user would and check what it prints. ruff lints the Python, with the
   rules in `pyproject.toml`.
+
+## Coverage
+
+```sh
+cmake --workflow --preset coverage
+```
+
+builds a GCC Debug tree with `APP_COVERAGE=ON`, which instruments `app_core` and
+`main.cpp` (never `util` or the tests), runs the unit and integration tiers, and
+runs gcovr once over `src/` and `inc/`, writing `build/coverage/coverage/`:
+`cobertura.xml`, `html/index.html`, the JSON reports and `summary.md`. The
+integration tier counts because `main.cpp` only runs there. It fails when total
+line coverage is under `APP_COVERAGE_FAIL_UNDER_LINE` (90%) or any one file is
+under `APP_COVERAGE_FILE_FLOOR` (80%). Code no test can reach is fenced with
+`GCOVR_EXCL_START`/`GCOVR_EXCL_STOP` and a comment saying why, as `main`'s
+handler for a failed write to stdout is. CI runs it in the gate and puts the
+table on the run's summary page.
 
 ## Profiling
 

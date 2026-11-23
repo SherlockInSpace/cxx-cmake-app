@@ -54,6 +54,15 @@
       }
     },
     {
+      "name": "coverage",
+      "inherits": "base",
+      "displayName": "gcov coverage (Debug, GCC)",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "APP_COVERAGE": "ON"
+      }
+    },
+    {
       "name": "ci",
       "hidden": true,
       "inherits": "base",
@@ -95,6 +104,17 @@
     {
       "name": "asan-ubsan",
       "configurePreset": "asan-ubsan"
+    },
+    {
+      "name": "coverage",
+      "configurePreset": "coverage"
+    },
+    {
+      "name": "coverage-report",
+      "configurePreset": "coverage",
+      "targets": [
+        "coverage"
+      ]
     },
     {
       "name": "ci-debug",
@@ -139,6 +159,11 @@
         "ASAN_OPTIONS": "detect_leaks=1:abort_on_error=1:strict_string_checks=1",
         "UBSAN_OPTIONS": "print_stacktrace=1:halt_on_error=1"
       }
+    },
+    {
+      "name": "coverage",
+      "inherits": "base",
+      "configurePreset": "coverage"
     },
     {
       "name": "ci-debug",
@@ -225,6 +250,23 @@
         {
           "type": "test",
           "name": "asan-ubsan"
+        }
+      ]
+    },
+    {
+      "name": "coverage",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "coverage"
+        },
+        {
+          "type": "build",
+          "name": "coverage"
+        },
+        {
+          "type": "build",
+          "name": "coverage-report"
         }
       ]
     },

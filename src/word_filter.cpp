@@ -7,6 +7,7 @@
 
 #include <string>
 #include <string_view>
+#include <utility>
 
 namespace app {
 
@@ -18,7 +19,7 @@ std::string_view toString(Sighting sighting)
     case Sighting::kSeen:
         return "seen";
     }
-    return "unknown";
+    std::unreachable();
 }
 
 Sighting WordFilter::observe(const std::string& word)

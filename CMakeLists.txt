@@ -151,6 +151,29 @@ target_link_libraries(${PROJECT_NAME}
     spdlog::spdlog
 )
 
+################################################################################
+# Coverage
+# gcov on app_core and main.cpp, never on util or the tests. The coverage
+# preset turns it on; the coverage target runs the unit and integration tiers
+# and then gcovr once (cmake/coverage-report.cmake), and fails under either
+# floor. GCC only.
+option(APP_COVERAGE "Instrument the application for gcov coverage" OFF)
+set(APP_COVERAGE_FAIL_UNDER_LINE 90 CACHE STRING
+  "The coverage target fails if total line coverage is under this percentage")
+set(APP_COVERAGE_FILE_FLOOR 80 CACHE STRING
+  "The coverage target fails if any one file's line coverage is under this percentage")
+
+if(APP_COVERAGE)
+  if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    message(FATAL_ERROR "APP_COVERAGE uses gcov and gcovr, so it needs GCC.")
+  endif()
+  find_program(GCOVR_EXECUTABLE gcovr REQUIRED)
+  target_compile_options(app_core PRIVATE --coverage -fprofile-update=atomic)
+  target_compile_options(${PROJECT_NAME} PRIVATE --coverage -fprofile-update=atomic)
+  # app_core is static, so everything that links it needs gcov's runtime.
+  target_link_options(app_core PUBLIC --coverage)
+endif()
+
 # No C++20 modules, so skip the module scan (it also puts GCC-only flags into
 # compile_commands.json that clang-tidy rejects).
 set_target_properties(app_core ${PROJECT_NAME} PROPERTIES CXX_SCAN_FOR_MODULES OFF)
@@ -163,4 +186,24 @@ install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 # (test/integration, pytest driving the binary).
 if(BUILD_TESTING)
   add_subdirectory(test)
+endif()
+
+if(APP_COVERAGE)
+  if(NOT BUILD_TESTING)
+    message(FATAL_ERROR "APP_COVERAGE needs BUILD_TESTING=ON")
+  endif()
+  add_custom_target(coverage
+    COMMAND ${CMAKE_COMMAND}
+      -DSOURCE_DIR=${PROJECT_SOURCE_DIR}
+      -DBINARY_DIR=${PROJECT_BINARY_DIR}
+      -DGCOVR=${GCOVR_EXECUTABLE}
+      -DCTEST=${CMAKE_CTEST_COMMAND}
+      -DLABELS=unit|integration
+      -DFAIL_UNDER_LINE=${APP_COVERAGE_FAIL_UNDER_LINE}
+      -DFILE_FLOOR=${APP_COVERAGE_FILE_FLOOR}
+      -P ${PROJECT_SOURCE_DIR}/cmake/coverage-report.cmake
+    DEPENDS ${PROJECT_NAME} app_unit_tests
+    COMMENT "Running the unit and integration tiers and gcovr"
+    USES_TERMINAL
+    VERBATIM)
 endif()
