@@ -61,6 +61,19 @@ jobs:
           cmake --build --preset ci-debug
           ctest --preset ci-debug
 
+  # The ENABLE_TRACY build: the zones become Tracy's, linked against the
+  # image's TracyClient. The other jobs build them out.
+  tracy:
+    name: build with Tracy
+    runs-on: ubuntu-24.04
+    container: ghcr.io/sherlockinspace/cxx-cmake-container/ci:0.1.5@sha256:03884a80512bdfe862456d2be4be5a5f3f5fd0bf1f75854c60d8b3ccc22ea1ad
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Configure, build and test with ENABLE_TRACY
+        run: cmake --workflow --preset tracy
+
   # clang-tidy reads each file's flags from compile_commands.json, so the tree
   # is configured with clang. .clang-tidy makes every warning an error.
   tidy:
@@ -92,4 +105,4 @@ jobs:
       - name: Check formatting
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          clang-format --dry-run -Werror $(git ls-files 'src/*.cpp' 'inc/*.hpp' 'test/*.cpp')
+          clang-format --dry-run -Werror $(git ls-files 'src/*.cpp' 'src/*.hpp' 'inc/*.hpp' 'test/*.cpp')

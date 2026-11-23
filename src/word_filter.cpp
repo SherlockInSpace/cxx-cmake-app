@@ -3,6 +3,8 @@
 
 #include <app/word_filter.hpp>
 
+#include "profiling.hpp"
+
 #include <string>
 #include <string_view>
 
@@ -21,6 +23,7 @@ std::string_view toString(Sighting sighting)
 
 Sighting WordFilter::observe(const std::string& word)
 {
+    APP_ZONE;
     const Sighting sighting = filter_.contains(word) ? Sighting::kSeen : Sighting::kNew;
     filter_.insert(word);
     return sighting;
