@@ -159,12 +159,8 @@ install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 ################################################################################
 # Tests
+# The unit tier (test/unit, GoogleTest) and the integration tier
+# (test/integration, pytest driving the binary).
 if(BUILD_TESTING)
   add_subdirectory(test)
-
-  # Until the integration tier arrives, one run of the binary and its output.
-  add_test(NAME app.runs COMMAND ${PROJECT_NAME} alpha beta alpha)
-  set_tests_properties(app.runs PROPERTIES
-    LABELS functional
-    PASS_REGULAR_EXPRESSION "new alpha\nnew beta\nseen alpha")
 endif()
