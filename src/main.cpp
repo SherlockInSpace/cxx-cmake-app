@@ -41,9 +41,13 @@ int main(int argc, char* argv[])
             APP_FRAME;
         }
     } catch (const std::exception& error) {
+        // Only reached if writing to stdout fails, which no test can arrange
+        // reliably, so coverage leaves it out.
+        // GCOVR_EXCL_START
         std::fputs(error.what(), stderr);
         std::fputs("\n", stderr);
         return EXIT_FAILURE;
+        // GCOVR_EXCL_STOP
     }
     return EXIT_SUCCESS;
 }

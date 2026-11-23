@@ -22,8 +22,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # util is not in Ubuntu, so no leg without the image; no tsan, docs or
-  # coverage presets yet.
+  # util is not in Ubuntu, so no leg without the image; no tsan or docs
+  # presets.
   full:
     uses: SherlockInSpace/cxx-cmake-library/.github/workflows/_full.yml@v0.4.0
     permissions:
@@ -34,7 +34,6 @@ jobs:
       distro: false
       tsan: false
       docs: false
-      coverage: false
 
   weekly:
     needs: full

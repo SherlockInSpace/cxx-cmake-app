@@ -16,7 +16,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # No coverage preset yet, so that leg is off.
   gate:
     uses: SherlockInSpace/cxx-cmake-library/.github/workflows/_gate.yml@v0.4.0
     permissions:
@@ -25,7 +24,6 @@ jobs:
     with:
       image: ghcr.io/sherlockinspace/cxx-cmake-container/ci:0.1.5@sha256:03884a80512bdfe862456d2be4be5a5f3f5fd0bf1f75854c60d8b3ccc22ea1ad
       test-labels: unit|integration
-      coverage: false
       tidy-files: src/|test/unit/
       format-files: |
         src/*.cpp
