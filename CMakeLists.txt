@@ -44,7 +44,20 @@ if(CPM_LOCAL_PACKAGES_ONLY)
   set(FETCHCONTENT_FULLY_DISCONNECTED ON)
 endif()
 
-find_package(util 0.3 CONFIG REQUIRED)
+# util, the library template: its latest release from the image, or the
+# Yocto sysroot. For a change that spans both repositories,
+# -DCPM_util_SOURCE=/work/cxx-cmake-library builds a library checkout instead
+# (README "Changes that span repositories" in the library). If CPM is allowed
+# to fetch, it builds the v0.3.0 tag's tarball, checked by its SHA-256.
+CPMAddPackage(
+  NAME util
+  FORCE "${CPM_DOWNLOAD_util}"
+  VERSION 0.3.0
+  URL https://github.com/SherlockInSpace/cxx-cmake-library/archive/refs/tags/v0.3.0.tar.gz
+  URL_HASH SHA256=e8d0141614fb14a78f2b6976e60dcfc233a135c8fe64b36b80babac6b6478b6c
+  FIND_PACKAGE_ARGUMENTS "CONFIG"
+  OPTIONS "BUILD_TESTING OFF"
+)
 
 # spdlog from the image or the Yocto sysroot. If CPM is allowed to fetch
 # (-DCPM_LOCAL_PACKAGES_ONLY=OFF), it builds the v1.17.0 source tarball,
