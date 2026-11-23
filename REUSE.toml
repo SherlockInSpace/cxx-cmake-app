@@ -1,0 +1,9 @@
+version = 1
+
+# Everything is MIT and ours, including the code seeded from the 2022
+# monorepo.
+[[annotations]]
+path = ["**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022-2026 Ryan Sherlock"
+SPDX-License-Identifier = "MIT"
