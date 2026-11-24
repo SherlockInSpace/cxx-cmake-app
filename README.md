@@ -140,15 +140,16 @@ are built; the integration tier is left out of cross builds.
 tag: gcc and clang in Debug and Release running both tiers, ASan and UBSan,
 clang-tidy and clang-format, in the container image named by digest. Next to it
 are this repository's own jobs: `util` resolving from the image, a build against
-the library's `main`, the `tracy` build, and ruff. `post-merge.yml` runs the
-library's `_full.yml` on every push to `main`, including native arm64, and
-weekly, when `_weekly.yml` opens an issue if it fails. Every commit in a pull
-request is linted as a Conventional Commit.
+the library's `main`, the `tracy` build, the `target` build in the `yocto`
+image, and ruff. `post-merge.yml` runs the library's `_full.yml` on every push
+to `main`, including native arm64, and weekly, when `_weekly.yml` opens an
+issue if it fails. Every commit in a pull request is linted as a Conventional
+Commit.
 
-The image and the library tag are the two references to move by hand: take the
-new image's version and digests from cxx-cmake-container's release notes, and
-the new library tag from its releases, and change every reference in one pull
-request.
+The images and the library tag are the references to move by hand: take the
+new version and the `ci` and `yocto` digests from cxx-cmake-container's release
+notes, and the new library tag from its releases, and change every reference
+in one pull request.
 
 ## Releases
 

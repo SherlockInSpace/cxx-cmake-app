@@ -96,3 +96,21 @@ jobs:
 
       - name: Lint the Python
         run: ruff check --no-cache
+
+  # The target preset in the yocto image: the SDK's cross compiler, with util,
+  # spdlog and GoogleTest from its sysroot. The binaries are aarch64, so
+  # nothing is run.
+  target:
+    name: cross-compile for the Yocto target
+    runs-on: ubuntu-24.04
+    container: ghcr.io/sherlockinspace/cxx-cmake-container/yocto:0.1.6@sha256:6cf87e271ce75a517b825a20b1192d377bad290a31638388e5fa84ad88b394f1
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Configure and build with the target preset
+        run: |
+          . "$YOCTO_SDK_ENV"
+          cmake --preset target
+          cmake --build --preset target
+          readelf -h build/target/app | grep 'Machine:.*AArch64'
