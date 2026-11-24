@@ -51,9 +51,10 @@ word on stderr.
 | `asan-ubsan` | Debug under AddressSanitizer and UBSan. |
 | `coverage` | GCC Debug with gcov; its workflow writes the coverage report (see Coverage). |
 | `tracy` | RelWithDebInfo with `ENABLE_TRACY` (see Profiling). |
+| `target` | Release, cross-compiled for the Yocto target (see Cross-compiling). |
 
-Each has a workflow preset, so `cmake --workflow --preset <name>` configures,
-builds and tests; build trees go in `build/<preset>`.
+Each except `target` has a workflow preset, so `cmake --workflow --preset
+<name>` configures, builds and tests; build trees go in `build/<preset>`.
 
 ## Dependencies
 
@@ -115,6 +116,23 @@ nothing and Tracy is not a dependency. Run the binary with the Tracy profiler or
 `tracy-capture` listening to record a trace. Unlike the library, which never
 contains Tracy, an application is the final binary, so whether it ships with
 zones is its own decision.
+
+## Cross-compiling
+
+The container's `yocto` image has the meta-cxx-cmake SDK. Source its
+environment, then use the `target` preset. The SDK sets
+`CMAKE_TOOLCHAIN_FILE`, so the preset names no toolchain file, and it is
+only available in the SDK environment:
+
+```sh
+. "$YOCTO_SDK_ENV"
+cmake --preset target
+cmake --build --preset target
+```
+
+What lands in `build/target` is for the layer's qemuarm64 machine and runs
+only on aarch64 hardware, so there is no test preset for it. The unit tests
+are built; the integration tier is left out of cross builds.
 
 ## CI
 
