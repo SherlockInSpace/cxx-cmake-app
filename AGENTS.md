@@ -18,6 +18,7 @@ Always use the presets; never invent build directories or flags.
 | Formatting | `clang-format -i <changed C++ files>` |
 | Python lint | `ruff check` |
 | Build against a library checkout | `cmake --preset dev -DCPM_util_SOURCE=/work/cxx-cmake-library` |
+| Cross-compile (`yocto` image only) | `. "$YOCTO_SDK_ENV" && cmake --preset target && cmake --build --preset target` |
 
 A change is done when `ci-debug` and `asan-ubsan` pass and clang-format,
 clang-tidy and ruff report nothing.

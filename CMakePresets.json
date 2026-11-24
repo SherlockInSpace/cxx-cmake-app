@@ -86,6 +86,20 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
+    },
+    {
+      "name": "target",
+      "inherits": "base",
+      "displayName": "Yocto target",
+      "description": "Cross-compiles for the meta-cxx-cmake qemuarm64 target in the container's yocto image. Source $YOCTO_SDK_ENV first; the SDK sets CMAKE_TOOLCHAIN_FILE. The binaries run only on aarch64 hardware.",
+      "condition": {
+        "type": "notEquals",
+        "lhs": "$env{OECORE_TARGET_SYSROOT}",
+        "rhs": ""
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
     }
   ],
   "buildPresets": [
@@ -123,6 +137,10 @@
     {
       "name": "ci-release",
       "configurePreset": "ci-release"
+    },
+    {
+      "name": "target",
+      "configurePreset": "target"
     }
   ],
   "testPresets": [
