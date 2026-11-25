@@ -25,7 +25,7 @@ Builds run inside the `dev` image. From the directory above your checkouts:
 ```sh
 docker run --rm -it -e HOST_UID=$(id -u) -e HOST_GID=$(id -g) \
   -v "$PWD":/work -v cxx-cmake-ccache:/home/dev/.cache/ccache \
-  ghcr.io/sherlockinspace/cxx-cmake-container/dev:0.1.5@sha256:e8663a5cd899b57203559db7e49b05b2fa29fc2736809906a6f21bbb767aadc3
+  ghcr.io/sherlockinspace/cxx-cmake-container/dev:0.1.7@sha256:d2c70f4362b6b0358ee1ec05f0d05918260528a4ccdd14fc39f367caf07f916c
 ```
 
 or open the checkout in an editor that supports Dev Containers

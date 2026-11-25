@@ -30,7 +30,7 @@ jobs:
       contents: read
       checks: write
     with:
-      image: ghcr.io/sherlockinspace/cxx-cmake-container/ci:0.1.5@sha256:03884a80512bdfe862456d2be4be5a5f3f5fd0bf1f75854c60d8b3ccc22ea1ad
+      image: ghcr.io/sherlockinspace/cxx-cmake-container/ci:0.1.7@sha256:ac63d328cbf81e61722b955057b08aca7932bfd87b044ffb16e7f8561fd46b8f
       distro: false
       tsan: false
       docs: false
