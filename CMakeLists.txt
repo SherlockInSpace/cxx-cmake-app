@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 4.3)
 # Project name and configuration
 project(
   "app"
-  VERSION 0.1.0 # x-release-please-version
+  VERSION 0.1.1 # x-release-please-version
   DESCRIPTION
     "Example C++ CMake application."
   HOMEPAGE_URL ""
