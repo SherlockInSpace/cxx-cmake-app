@@ -52,9 +52,11 @@ word on stderr.
 | `coverage` | GCC Debug with gcov; its workflow writes the coverage report (see Coverage). |
 | `tracy` | RelWithDebInfo with `ENABLE_TRACY` (see Profiling). |
 | `target` | Release, cross-compiled for the Yocto target (see Cross-compiling). |
+| `target-tracy` | `target` with `ENABLE_TRACY`, RelWithDebInfo (see Profiling). |
 
-Each except `target` has a workflow preset, so `cmake --workflow --preset
-<name>` configures, builds and tests; build trees go in `build/<preset>`.
+Each except `target` and `target-tracy` has a workflow preset, so `cmake
+--workflow --preset <name>` configures, builds and tests; build trees go in
+`build/<preset>`.
 
 ## Dependencies
 
@@ -116,6 +118,20 @@ nothing and Tracy is not a dependency. Run the binary with the Tracy profiler or
 `tracy-capture` listening to record a trace. Unlike the library, which never
 contains Tracy, an application is the final binary, so whether it ships with
 zones is its own decision.
+
+To profile on a board, build with `target-tracy` in the `yocto` image (see
+Cross-compiling) and copy `build/target-tracy/app` to a board whose image has
+the `tracy` package from meta-cxx-cmake. Tracy there is built on demand: the
+app records nothing until something connects. Start the app on the board, then
+capture from the dev image and open the file in the Tracy profiler:
+
+```sh
+tracy-capture -a <board-address> -o app.tracy
+```
+
+`tracy-capture` and the board's Tracy have to be the same release, 0.15.0.
+Function names in call stacks need the debug packages on the board, since
+Yocto strips binaries; zones and timings work without them.
 
 ## Cross-compiling
 

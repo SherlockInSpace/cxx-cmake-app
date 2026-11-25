@@ -100,6 +100,16 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
+    },
+    {
+      "name": "target-tracy",
+      "inherits": "target",
+      "displayName": "Yocto target with Tracy zones",
+      "description": "The target preset with ENABLE_TRACY, RelWithDebInfo like the tracy preset. Needs the SDK from meta-cxx-cmake 0.2.0 or later, which has Tracy in its sysroot.",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "ENABLE_TRACY": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -141,6 +151,10 @@
     {
       "name": "target",
       "configurePreset": "target"
+    },
+    {
+      "name": "target-tracy",
+      "configurePreset": "target-tracy"
     }
   ],
   "testPresets": [
