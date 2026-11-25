@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.1](https://github.com/SherlockInSpace/cxx-cmake-app/compare/v0.1.0...v0.1.1) (2026-11-25)
+
+
+### Build
+
+* **cmake:** target preset for the yocto image ([9d2a58d](https://github.com/SherlockInSpace/cxx-cmake-app/commit/9d2a58d520bed05bb85bcd0cb1a8e5bd8537071f)), closes [#14](https://github.com/SherlockInSpace/cxx-cmake-app/issues/14)
+* **cmake:** target-tracy preset ([f9eb922](https://github.com/SherlockInSpace/cxx-cmake-app/commit/f9eb9222b2135a18e4925f1906784c47dfc27c9e)), closes [#36](https://github.com/SherlockInSpace/cxx-cmake-app/issues/36)
+
 ## 0.1.0 (2026-11-24)
 
 
