@@ -97,8 +97,8 @@ jobs:
       - name: Lint the Python
         run: ruff check --no-cache
 
-  # The target preset in the yocto image: the SDK's cross compiler, with util,
-  # spdlog and GoogleTest from its sysroot. The binaries are aarch64, so
+  # The target presets in the yocto image: the SDK's cross compiler, with util,
+  # spdlog, GoogleTest and Tracy from its sysroot. The binaries are aarch64, so
   # nothing is run.
   target:
     name: cross-compile for the Yocto target
@@ -114,3 +114,11 @@ jobs:
           cmake --preset target
           cmake --build --preset target
           readelf -h build/target/app | grep 'Machine:.*AArch64'
+
+      - name: Configure and build with the target-tracy preset
+        run: |
+          . "$YOCTO_SDK_ENV"
+          cmake --preset target-tracy
+          cmake --build --preset target-tracy
+          readelf -h build/target-tracy/app | grep 'Machine:.*AArch64'
+          readelf -d build/target-tracy/app | grep 'NEEDED.*libTracyClient'
